@@ -526,6 +526,201 @@ git push origin feature/member1-auth
 
 ---
 
+## 🗄️ Database Design — MongoDB
+
+### 📦 Collections Overview
+
+| # | Collection | Purpose | Member |
+|---|-----------|---------|--------|
+| 1 | `users` | User accounts & roles | Member 1 |
+| 2 | `complaints` | Submitted complaints | Member 1 |
+| 3 | `departments` | Government departments | Member 2 |
+| 4 | `assignments` | Complaint-Department mapping | Member 2 |
+| 5 | `statushistories` | Status change history | Member 2 |
+| 6 | `feedbacks` | User ratings & comments | Member 2 |
+| 7 | `adminlogs` | Admin activity logs | Member 3 |
+
+---
+
+### 👤 Users Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "name": "String",
+  "email": "String",
+  "password": "String (hashed)",
+  "phone": "String",
+  "area": "String",
+  "city": "String",
+  "role": "citizen | admin | officer",
+  "departmentId": "ObjectId (officer only)",
+  "isActive": "Boolean",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
+---
+
+### 📋 Complaints Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "complaintId": "String (CMP-2024-001)",
+  "userId": "ObjectId → Users",
+  "title": "String",
+  "description": "String",
+  "category": "Road | Water | Electricity | Sanitation | General",
+  "priority": "Low | Medium | High",
+  "status": "Pending | Assigned | InProgress | Resolved | Rejected",
+  "image": "String (Cloudinary URL)",
+  "location": {
+    "area": "String",
+    "city": "String",
+    "coordinates": {
+      "lat": "Number",
+      "lng": "Number"
+    }
+  },
+  "assignedDepartmentId": "ObjectId → Departments",
+  "assignedOfficerId": "ObjectId → Users",
+  "aiCategory": "String (Phase 2)",
+  "aiPriority": "String (Phase 2)",
+  "aiConfidence": "Number (Phase 2)",
+  "aiProcessed": "Boolean",
+  "isResolved": "Boolean",
+  "resolvedAt": "Date",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
+---
+
+### 🏢 Departments Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "name": "String",
+  "category": "Road | Water | Electricity | Sanitation | General",
+  "email": "String",
+  "phone": "String",
+  "officerIds": ["ObjectId → Users"],
+  "totalAssigned": "Number",
+  "totalResolved": "Number",
+  "isActive": "Boolean",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
+---
+
+### 🔗 Assignments Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "complaintId": "ObjectId → Complaints",
+  "departmentId": "ObjectId → Departments",
+  "officerId": "ObjectId → Users",
+  "assignedBy": "ObjectId → Users (Admin)",
+  "assignedAt": "Date",
+  "notes": "String",
+  "createdAt": "Date"
+}
+```
+
+---
+
+### 📊 StatusHistories Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "complaintId": "ObjectId → Complaints",
+  "previousStatus": "String",
+  "newStatus": "String",
+  "updatedBy": "ObjectId → Users",
+  "updatedByRole": "admin | officer",
+  "comment": "String",
+  "updatedAt": "Date",
+  "createdAt": "Date"
+}
+```
+
+---
+
+### ⭐ Feedbacks Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "complaintId": "ObjectId → Complaints",
+  "userId": "ObjectId → Users",
+  "rating": "Number (1-5)",
+  "comment": "String",
+  "submittedAt": "Date",
+  "createdAt": "Date"
+}
+```
+
+---
+
+### 📝 AdminLogs Collection
+
+```json
+{
+  "_id": "ObjectId",
+  "adminId": "ObjectId → Users",
+  "action": "String",
+  "actionType": "priority_change | dept_assign | status_update | user_manage",
+  "complaintId": "ObjectId → Complaints",
+  "userId": "ObjectId → Users",
+  "previousValue": "String",
+  "newValue": "String",
+  "timestamp": "Date",
+  "createdAt": "Date"
+}
+```
+
+---
+
+### 🔗 Collection Relationships
+
+```
+users ──────────────── complaints
+  │                       │
+  │ (officer)             │
+  │                       ├──── assignments
+  │                       │         │
+departments ─────────────┘         │
+  │                                │
+  └── officerIds              statushistories
+  
+complaints ──── feedbacks
+           ──── adminlogs
+```
+
+---
+
+### 📂 Mongoose Models Location
+
+```
+backend/
+└── models/
+    ├── User.model.js           → Member 1
+    ├── Complaint.model.js      → Member 1
+    ├── Department.model.js     → Member 2
+    ├── Assignment.model.js     → Member 2
+    ├── StatusHistory.model.js  → Member 2
+    ├── Feedback.model.js       → Member 2
+    └── AdminLog.model.js       → Member 3
+```
+
 <div align="center">
 
 **Built with ❤️ by Team — Final Year Project**
